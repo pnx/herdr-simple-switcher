@@ -15,7 +15,7 @@ selected=$("$HERDR" workspace list | \
     "\t" + .workspace_id' | \
   fzf --delimiter=$'\t' --with-nth=1 \
       --prompt="Workspace > " \
-      --reverse --no-multi --exit-0 || true)
+      --reverse --no-multi --no-preview --exit-0 || true)
 
 if [[ -n "$selected" ]]; then
   workspace_id=$(echo "$selected" | cut -f2)

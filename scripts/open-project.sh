@@ -48,7 +48,7 @@ selected=$(fd -H -t d '^\.git$' "$projects_root" \
   sort |
   fzf --delimiter=$'\t' --with-nth=1 \
     --prompt="Project > " \
-    --reverse --no-multi --exit-0 || true)
+    --reverse --no-multi --no-preview --exit-0 || true)
 
 [[ -n "$selected" ]] || exit 0
 

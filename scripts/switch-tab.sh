@@ -18,7 +18,7 @@ selected=$("$HERDR" tab list --workspace "$current_ws" | \
   fzf --delimiter=$'\t' --with-nth=1 \
       --prompt="Tab > " \
       --header="workspace: ${current_ws_label}" \
-      --reverse --no-multi --exit-0 || true)
+      --reverse --no-multi --no-preview --exit-0 || true)
 
 if [[ -n "$selected" ]]; then
   tab_id=$(echo "$selected" | cut -f2)
