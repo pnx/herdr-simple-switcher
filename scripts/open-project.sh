@@ -42,9 +42,8 @@ if [[ ! -d "$projects_root" ]]; then
   die "Projects root not found: $projects_root"
 fi
 
-# List every git project as "<workspace>/<project>\t<workspace>\t<abs-path>".
 selected=$(fd -H -t d '^\.git$' "$projects_root" \
-  --exec sh -c 'p="$1"; ws="$(basename "$(dirname "$p")")"; printf "%s/%s\t%s\t%s\n" "$ws" "$(basename "$p")" "$ws" "$p"' _ {//} |
+    --exec sh -c 'printf "%s\t%s\n" "$(basename "$1")" "$1"' _ {//} |
   sort |
   fzf --delimiter=$'\t' --with-nth=1 \
     --prompt="Project > " \
@@ -52,27 +51,18 @@ selected=$(fd -H -t d '^\.git$' "$projects_root" \
 
 [[ -n "$selected" ]] || exit 0
 
-ws_label=$(printf '%s' "$selected" | cut -f2)
-project_path=$(printf '%s' "$selected" | cut -f3)
-project_name=$(basename "$project_path")
+project_name=$(echo "$selected" | cut -f1)
+project_path=$(echo "$selected" | cut -f2)
 
 # Reuse the workspace whose label matches, otherwise create it.
 workspace_id=$("$HERDR" workspace list |
-  jq -r --arg label "$ws_label" \
+  jq -r --arg label "$project_name" \
     'first(.result.workspaces[] | select(.label == $label) | .workspace_id) // empty')
 
-if [[ -n "$workspace_id" ]]; then
-  tab_id=$("$HERDR" tab create --workspace "$workspace_id" \
-    --cwd "$project_path" --label "$project_name" --no-focus |
-    jq -r '.result.tab.tab_id')
-else
+if [[ -z "$workspace_id" ]]; then
   created=$("$HERDR" workspace create --cwd "$project_path" \
-    --label "$ws_label" --no-focus)
+    --label "$project_name" --no-focus)
   workspace_id=$(printf '%s' "$created" | jq -r '.result.workspace.workspace_id')
-  tab_id=$(printf '%s' "$created" | jq -r '.result.tab.tab_id')
-  # A fresh workspace already opens its first tab at the project cwd; label it.
-  "$HERDR" tab rename "$tab_id" "$project_name" >/dev/null
 fi
 
 "$HERDR" workspace focus "$workspace_id" >/dev/null
-"$HERDR" tab focus "$tab_id" >/dev/null
